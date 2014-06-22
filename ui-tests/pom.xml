@@ -1,0 +1,172 @@
+<?xml version="1.0"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>net.slisenko</groupId>
+        <artifactId>webdriver-examples</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>ui-tests</artifactId>
+
+    <properties>
+        <tested-war-groupId>net.slisenko</tested-war-groupId>
+        <tested-war-artifactId>example-webapp</tested-war-artifactId>
+        <maven.surefire.plugin.version>2.11</maven.surefire.plugin.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>${tested-war-groupId}</groupId>
+            <artifactId>${tested-war-artifactId}</artifactId>
+            <version>${project.version}</version>
+            <type>war</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.8.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-java</artifactId>
+            <version>2.41.0</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.7</source>
+                    <target>1.7</target>
+                </configuration>
+            </plugin>
+            <!-- Copies specified dependency -->
+            <plugin>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>${tested-war-groupId}</groupId>
+                                    <artifactId>${tested-war-artifactId}</artifactId>
+                                    <type>war</type>
+                                    <overWrite>true</overWrite>
+                                    <destFileName>${tested-war-artifactId}.war</destFileName>
+                                </artifactItem>
+                            </artifactItems>
+                            <outputDirectory>${project.build.directory}/war</outputDirectory>
+                            <overWriteReleases>true</overWriteReleases>
+                            <overWriteSnapshots>true</overWriteSnapshots>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven.surefire.plugin.version}</version>
+                <configuration>
+                    <skip>true</skip>
+                    <!-- Take jetty port from enviroment variables. We also need to take
+                        it from enviroment variables in unit-tests code. -->
+                    <systemPropertyVariables>
+                        <jetty.port>${jetty.port}</jetty.port>
+                    </systemPropertyVariables>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>integration-test</phase>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <skip>false</skip>
+                            <forkMode>never</forkMode>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <!-- This plugin has some number of independent goals to assist with
+                    maven lifecycle. Here plugin reserves two unused random ports for jetty. -->
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>1.6</version>
+                <configuration>
+                    <portNames>
+                        <portName>jetty.port</portName>
+                        <portName>jetty.port.stop</portName>
+                    </portNames>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>reserve-port</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>reserve-network-port</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.mortbay.jetty</groupId>
+                <artifactId>jetty-maven-plugin</artifactId>
+                <version>7.5.4.v20111024</version>
+                <executions>
+                    <!-- Here we start jetty and deploy my-webapp war at pre-integration-test phase -->
+                    <execution>
+                        <id>start-jetty</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <!-- This goal don't assemble current module, but deploys war-file -->
+                            <goal>deploy-war</goal>
+                        </goals>
+                        <configuration>
+                            <!-- Allow jetty plugin run automatically -->
+                            <daemon>true</daemon>
+                            <connectors>
+                                <connector implementation="org.eclipse.jetty.server.nio.SelectChannelConnector">
+                                    <port>${jetty.port}</port>
+                                </connector>
+                            </connectors>
+
+                            <!-- Configure location of war-file -->
+                            <war>${project.build.directory}/war/${tested-war-artifactId}.war</war>
+                            <webApp>
+                                <contextPath>/example-webapp</contextPath>
+                                <extraClasspath>${project.basedir}/src/test/resources</extraClasspath>
+                            </webApp>
+                        </configuration>
+                    </execution>
+
+                    <!-- Here we stop jetty at post-integration-test phase -->
+                    <execution>
+                        <id>stop-jetty</id>
+                        <phase>post-integration-test</phase>
+                        <goals>
+                            <goal>stop</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <stopPort>${jetty.port.stop}</stopPort>
+                    <stopKey>my-stop-key</stopKey>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

@@ -1,0 +1,28 @@
+<html>
+<body>
+<script>
+function checkLogin() {
+    if (value("login") == "admin" && value("password") == "123456") {
+        document.loginform.submit();
+    } else {
+        document.getElementById("errormessage").style.visibility = "visible";
+    }
+}
+
+function value(id) {
+    return document.getElementById(id).value;
+}
+</script>
+
+<h2>Login page</h2>
+<div id="errormessage" style="visibility: hidden;">Error, wrong login/password</div>
+
+<form name="loginform" action="news.html">
+Login:<br>
+<input id="login" type="text"/><br>
+Password:<br>
+<input id="password" type="password" /><br>
+<input id="loginBtn" type="button" value="Login" onClick="checkLogin()"/>
+</form>
+</body>
+</html>

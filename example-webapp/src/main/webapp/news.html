@@ -1,0 +1,25 @@
+<html>
+<body>
+<script>
+function addPost() {
+    var title = value("title");
+    var text = value("text");
+    document.getElementById("news").innerHTML += "<div class=\"post\"><h3>" + title + "</h3><p>" + text + "</p></div>";
+}
+
+function value(id) {
+    return document.getElementById(id).value;
+}
+</script>
+
+<h2>News</h2>
+<div id="news">
+</div>
+
+Post title:<br>
+<input id="title" type="text"/><br>
+Post text:<br>
+<textarea id="text"></textarea><br>
+<input id="addPostBtn" type="button" value="Add post" onClick="addPost()"/>
+</body>
+</html>
